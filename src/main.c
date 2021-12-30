@@ -1,5 +1,6 @@
 
 #include <SDL.h>
+#include <SDL_mixer.h>
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
@@ -277,16 +278,29 @@ static void clear_spritesheets() {
 	_spritesheets_count = MAT_LSPR;
 }
 
+static void init_sound() {
+	Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 1, 2048);
+}
+
+static Mix_Chunk *_sounds[SND_COUNT];
 
 static void load_sounds() {
+	_sounds[SND_MASSUE2] = Mix_LoadWAV("MASSUE2.VOC");
+	_sounds[SND_RESSORT] = Mix_LoadWAV("RESSORT.VOC");
+	_sounds[SND_BONUS]   = Mix_LoadWAV("BONUS.VOC");
 }
 
 static void free_sounds() {
 	for (int i = 0; i < SND_COUNT; ++i) {
+		Mix_FreeChunk(_sounds[i]);
+		_sounds[i] = 0;
 	}
 }
 
 static void play_sound(int num) {
+	if (_sounds[num]) {
+		Mix_PlayChannel(-1, _sounds[num], 0);
+	}
 }
 
 static void play_music(int num) {
@@ -301,6 +315,7 @@ static struct host_intf_t _host = {
 	.set_clipping_rect = render_set_clipping_rect,
 	.fill_background_rect = render_fill_background_rect,
 	.add_rect = render_add_rect,
+	.init_sound = init_sound,
 	.play_sound = play_sound,
 	.play_music = play_music,
 };
@@ -443,6 +458,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	Mix_Init(0);
 	load_sounds();
 
 	Game_Init(&_host);
@@ -473,6 +489,7 @@ int main(int argc, char *argv[]) {
 	Game_Fini();
 
 	free_sounds();
+	Mix_Quit();
 
 	SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(window);

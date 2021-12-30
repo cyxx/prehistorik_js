@@ -25,7 +25,7 @@ int Cave_Init(int level, int num) {
 	if (level == 1) {
 		Game_DrawCaveScreenLevel1(num);
 		g_game.cave_exit_x_pos = p1_level1_cave_size_tbl[num] - 8;
-		g_game.cave_exit_y_pos = 40;
+		g_game.cave_enter_x_pos = 40;
 	} else if (level == 3) {
 	} else if (level == 5) {
 	} else if (level == 7) {

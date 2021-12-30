@@ -39,6 +39,7 @@ struct host_intf_t {
 	void (*set_clipping_rect)(int dst_mask, int x, int y, int w, int h);
 	void (*fill_background_rect)(int x, int y, int w, int h, uint32_t color);
 	void (*add_rect)(int x, int y, int w, int h, uint32_t color);
+	void (*init_sound)();
 	void (*play_sound)(int num);
 	void (*play_music)(int num);
 };
@@ -165,7 +166,7 @@ struct game_t {
 	uint16_t object_cave_entrance_mask;
 	int16_t object_player_y_vel;
 
-	int16_t cave_exit_x_pos, cave_exit_y_pos;
+	int16_t cave_exit_x_pos, cave_enter_x_pos;
 	int16_t player_exit_from_cave_screen_x_pos, player_exit_from_cave_screen_y_pos;
 };
 

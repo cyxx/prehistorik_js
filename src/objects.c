@@ -146,8 +146,8 @@ struct obj_cave_bat_t {
 	int16_t unk0;
 	int16_t unk2;
 	int16_t state;
-	int16_t unk6;
-	int16_t unk8;
+	int16_t x_pos;
+	int16_t y_pos;
 } __attribute__((packed));
 
 static uint8_t object_size(int num) {
@@ -313,8 +313,8 @@ void Objects_Reset(uint16_t *p) {
 		case 0x17: {
 				struct obj_cave_bat_t *obj = (struct obj_cave_bat_t *)(p + 1);
 				obj->state = 0;
-				obj->unk6 = obj->unk0;
-				obj->unk8 = obj->unk2;
+				obj->x_pos = obj->unk0;
+				obj->y_pos = obj->unk2;
 			}
 			break;
 		default:
@@ -1147,20 +1147,20 @@ void Objects_Update() {
 					break;
 				}
 				if (k_monsters_enabled != 0) {
-					obj->unk8 += (Random_GetNumber() %  7) - 3;
-					obj->unk6 += (Random_GetNumber() % 11) - 5;
+					obj->y_pos += (Random_GetNumber() %  7) - 3;
+					obj->x_pos += (Random_GetNumber() % 11) - 5;
 				}
-				if (obj->unk6 < g_game.cave_exit_y_pos) {
-					obj->unk6 = g_game.cave_exit_y_pos;
+				if (obj->x_pos < g_game.cave_enter_x_pos) {
+					obj->x_pos = g_game.cave_enter_x_pos;
 				}
-				if (obj->unk6 > g_game.cave_exit_x_pos - 30){
-					obj->unk6 = g_game.cave_exit_x_pos - 30;
+				if (obj->x_pos > g_game.cave_exit_x_pos - 30){
+					obj->x_pos = g_game.cave_exit_x_pos - 30;
 				}
-				if (obj->unk8 > 140) {
-					obj->unk8 = 130;
+				if (obj->y_pos > 140) {
+					obj->y_pos = 130;
 				}
-				const int16_t si = obj->unk6;
-				const int16_t di = obj->unk8;
+				const int16_t si = obj->x_pos;
+				const int16_t di = obj->y_pos;
 				if (k_monsters_enabled != 0) {
 					obj->state ^= 1;
 				}

@@ -1,7 +1,13 @@
 
 #include "game.h"
 
+enum {
+	STATE_LOGOS,
+	STATE_LEVEL1,
+};
+
 struct game_t g_game;
+static int _state;
 
 static void restart_level() {
 	g_game.current_score = 0;
@@ -16,7 +22,8 @@ int Game_Init(struct host_intf_t *host_intf) {
 	g_game.host.load_file("charset1.mat", 0);
 	Random_Reset();
 
-	restart_level();
+	g_game.host.load_file("titre2.pc1", 0);
+	_state = STATE_LOGOS;
 	return 0;
 }
 
@@ -35,8 +42,19 @@ int Game_UpdateInput(int key, int down) {
 }
 
 int Game_DoFrame() {
-	if (!Level1_DoFrame() || g_game.player_lifes < 0 || g_game.time == 0) {
-		restart_level();
+	switch (_state) {
+	case STATE_LOGOS:
+		if (g_game.keymask) {
+			g_game.host.init_sound();
+			_state = STATE_LEVEL1;
+			restart_level();
+		}
+		break;
+	case STATE_LEVEL1:
+		if (!Level1_DoFrame() || g_game.player_lifes < 0 || g_game.time == 0) {
+			restart_level();
+		}
+		break;
 	}
 	return 0;
 }
