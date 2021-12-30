@@ -1,0 +1,26 @@
+<html>
+	<head>
+		<title>Prehistorik_js</title>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<meta name="viewport" content="width=640">
+	</head>
+
+	<body style="margin: 0px auto; text-align: center; padding: 16px 16px; width: 640px; background: #e5e5e5;">
+		<div align="center" style="background-color: #fff; padding-top: 5px; padding-bottom: 5px; width: 640px; text-align: center;">
+			<div align="center">
+				<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+			</div>
+		</div>
+                <div style="background-color: #eeeeee; padding: 16px;" >
+			<div align="center">
+			</div>
+		</div>
+		<script type='text/javascript'>
+			var Module = {
+				canvas: (function() { return document.getElementById('canvas'); })()
+			};
+		</script>
+		<script src="pre1.js"></script>
+		<script src="pre1_demo.js"></script>
+	</body>
+</html>
