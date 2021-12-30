@@ -176,7 +176,7 @@
     }
 
     }
-    loadPackage({"files": [{"filename": "/fond1.bmp", "start": 0, "end": 32202}, {"filename": "/sheet-charset1.bin", "start": 32202, "end": 32972}, {"filename": "/sheet-eleml1.bin", "start": 32972, "end": 33150}, {"filename": "/sheet-grot1.bin", "start": 33150, "end": 33168}, {"filename": "/sheet-l1spr.bin", "start": 33168, "end": 34346}, {"filename": "/sheet-charset1.bmp", "start": 34346, "end": 51808}, {"filename": "/sheet-eleml1.bmp", "start": 51808, "end": 118422}, {"filename": "/sheet-grot1.bmp", "start": 118422, "end": 135884}, {"filename": "/sheet-l1spr.bmp", "start": 135884, "end": 268034}, {"filename": "/LEVEL1.DUR", "start": 268034, "end": 268994}], "remote_package_size": 268994, "package_uuid": "06bc87b5-2e1f-40c8-9f20-a6579dc8a96c"});
+    loadPackage({"files": [{"filename": "/fond1.bmp", "start": 0, "end": 32202}, {"filename": "/sheet-charset1.bin", "start": 32202, "end": 32972}, {"filename": "/sheet-eleml1.bin", "start": 32972, "end": 33150}, {"filename": "/sheet-grot1.bin", "start": 33150, "end": 33168}, {"filename": "/sheet-l1spr.bin", "start": 33168, "end": 34346}, {"filename": "/sheet-charset1.bmp", "start": 34346, "end": 51808}, {"filename": "/sheet-eleml1.bmp", "start": 51808, "end": 118422}, {"filename": "/sheet-grot1.bmp", "start": 118422, "end": 135884}, {"filename": "/sheet-l1spr.bmp", "start": 135884, "end": 268034}, {"filename": "/LEVEL1.DUR", "start": 268034, "end": 268994}, {"filename": "/BONUS.VOC", "start": 268994, "end": 271417}, {"filename": "/MASSUE2.VOC", "start": 271417, "end": 272642}, {"filename": "/RESSORT.VOC", "start": 272642, "end": 274323}], "remote_package_size": 274323, "package_uuid": "663c6946-6639-4c78-83ad-e7cfe366ceff"});
 
   })();
 

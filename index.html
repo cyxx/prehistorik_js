@@ -11,8 +11,11 @@
 				<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
 			</div>
 		</div>
-                <div style="background-color: #eeeeee; padding: 16px;" >
-			<div align="center">
+                <div style="background-color: #eeeeee; padding-top: 128px; padding-left:128px; height:128px;">
+			<div class="joystick" style="width: 50%; float: left;"></div>
+			<div class="buttons" style="width: 50%; float: right;">
+				<div class="button_jump" style="width: 50%; float: left;"></div>
+				<div class="button_action" style="width: 50%; float: right;"></div>
 			</div>
 		</div>
 		<script type='text/javascript'>
@@ -22,5 +25,105 @@
 		</script>
 		<script src="pre1.js"></script>
 		<script src="pre1_demo.js"></script>
+		<script src="nipplejs.min.js"></script>
+		<script>
+			const KEYCODES = {
+				'ArrowLeft': 37,
+				'ArrowUp': 38,
+				'ArrowRight': 39,
+				'ArrowDown': 40,
+				'Enter': 13,
+				'Shift': 16,
+				'j': 74,
+			};
+			function emitKeyEvent( key, evt ) {
+				var ev = new Event( evt, { bubbles: true } );
+				ev.key = key;
+				ev.keyCode = ev.which = KEYCODES[ key ];
+				Module.canvas.dispatchEvent( ev );
+			}
+			var joystick = nipplejs.create({
+				zone: document.getElementsByClassName('joystick')[0],
+				mode: 'static',
+				dynamicPage: true,
+				size: 192,
+				threshold: .3,
+				color: '#555',
+			} );
+			var direction = { left: false, right: false, up: false, down: false };
+			function releaseDirectionKeys( ) {
+				if ( direction.left ) {
+					emitKeyEvent( 'ArrowLeft', 'keyup' );
+					direction.left = false;
+				}
+				if ( direction.right ) {
+					emitKeyEvent( 'ArrowRight', 'keyup' );
+					direction.right = false;
+				}
+				if ( direction.up ) {
+					emitKeyEvent( 'ArrowUp', 'keyup' );
+					direction.up = false;
+				}
+				if ( direction.down ) {
+					emitKeyEvent( 'ArrowDown', 'keyup' );
+					direction.down = false;
+				}
+			}
+			joystick.on( 'dir:left', function( evt, data ) {
+				releaseDirectionKeys( );
+				emitKeyEvent( 'ArrowLeft', 'keydown' );
+				direction.left = true;
+			} );
+			joystick.on( 'dir:right', function( evt, data ) {
+				releaseDirectionKeys( );
+				emitKeyEvent( 'ArrowRight', 'keydown' );
+				direction.right = true;
+			} );
+			joystick.on( 'dir:up', function( evt, data ) {
+				releaseDirectionKeys( );
+				emitKeyEvent( 'ArrowUp', 'keydown' );
+				direction.up = true;
+			} );
+			joystick.on( 'dir:down', function( evt, data ) {
+				releaseDirectionKeys( );
+				emitKeyEvent( 'ArrowDown', 'keydown' );
+				direction.down = true;
+			} );
+			joystick.on( 'end', function( evt, data ) {
+				releaseDirectionKeys( );
+			} );
+			var button_jump = nipplejs.create({
+				zone: document.getElementsByClassName('button_jump')[0],
+				mode: 'static',
+				dynamicPage: true,
+				size: 128,
+				lockX: true,
+				lockY: true,
+				threshold: 0,
+				color: '#555'
+			} );
+			button_jump.on( 'start', function( evt, data ) {
+				emitKeyEvent( 'j', 'keydown' );
+			} );
+			button_jump.on( 'end', function( evt, data ) {
+				emitKeyEvent( 'j', 'keyup' );
+			} );
+			var button_action = nipplejs.create({
+				zone: document.getElementsByClassName('button_action')[0],
+				mode: 'static',
+				dynamicPage: true,
+				size: 128,
+				lockX: true,
+				lockY: true,
+				threshold: 0,
+				color: '#555'
+			} );
+			button_action.on( 'start', function( evt, data ) {
+				emitKeyEvent( 'Enter', 'keydown' );
+			} );
+			button_action.on( 'end', function( evt, data ) {
+				emitKeyEvent( 'Enter', 'keyup' );
+			} );
+		</script>
 	</body>
 </html>
