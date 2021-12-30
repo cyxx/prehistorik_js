@@ -16,7 +16,7 @@ enum {
 	OBJ_PYRO_TAX = 0x0c, /* obj_monster_t */
 	OBJ_TURTOSAURUS = 0x0d, /* obj_monster_t */
 	OBJ_CHIMP_AGOGO = 0x0e, /* obj_monkey_t */
-	OBJ_PTERIYAKI = 0x0f,
+	OBJ_PTERIYAKI = 0x0f, /* obj_bird_t */
 	OBJ_PLATFORM = 0x10, /* obj_platform_t */
 	OBJ_CAVE_ENTRANCE = 0x12, /* obj3_t */
 	OBJ_FIRE = 0x13, /* obj_fire_t */
@@ -85,8 +85,8 @@ struct obj_fish_t {
 struct obj_monster_t {
 	int16_t init_state;
 	int16_t unk2;
-	int16_t unk4;
-	int16_t unk6;
+	int16_t init_x_pos;
+	int16_t init_y_pos;
 	int16_t state;
 	int16_t lifes;
 	int16_t x_pos;
@@ -104,6 +104,14 @@ struct obj_monkey_t {
 	int16_t throw_flag;
 	int16_t throw_x;
 	int16_t throw_y;
+} __attribute__((packed));
+
+struct obj_bird_t {
+	int16_t state;
+	int16_t unk2;
+	int16_t unk4;
+	int16_t frame;
+	int16_t unk8[4];
 } __attribute__((packed));
 
 struct obj_platform_t {
@@ -129,15 +137,15 @@ struct obj_cave_sign_t {
 } __attribute__((packed));
 
 struct obj_cave_spider_t {
-	int16_t unk0;
+	int16_t x_pos;
 	int16_t counter;
-	int16_t unk4;
+	int16_t y_pos;
 } __attribute__((packed));
 
 struct obj_cave_bat_t {
 	int16_t unk0;
 	int16_t unk2;
-	int16_t unk4;
+	int16_t state;
 	int16_t unk6;
 	int16_t unk8;
 } __attribute__((packed));
@@ -197,9 +205,9 @@ static uint8_t object_size(int num) {
 	return 0;
 }
 
-void Objects_Reset(uint8_t *p) {
+void Objects_Reset(uint16_t *p) {
 	while (1) {
-		const uint16_t num = READ_LE_UINT16(p);
+		const uint16_t num = p[0];
 		if (num == 0xFF) {
 			break;
 		}
@@ -216,29 +224,37 @@ void Objects_Reset(uint8_t *p) {
 		case 0x25:
 			break;
 		case 0x03:
-		case 0x1c:
-			WRITE_LE_UINT16(p + 6, 2);
+		case 0x1c: {
+				struct obj3_t *obj = (struct obj3_t *)(p + 1);
+				obj->counter = 2;
+			}
 			break;
-		case 0x04:
-			WRITE_LE_UINT16(p + 6, 3);
+		case 0x04: {
+				struct obj3_t *obj = (struct obj3_t *)(p + 1);
+				obj->counter = 3;
+			}
 			break;
 		case 0x05: {
-				struct obj5_t *obj = (struct obj5_t *)(p + 2);
+				struct obj5_t *obj = (struct obj5_t *)(p + 1);
 				obj->counter = obj->init_counter;
 				obj->mask = 0;
 			}
 			break;
-		case 0x06:
-			WRITE_LE_UINT16(p + 8, 2);
+		case 0x06: {
+				struct obj_food_t *obj = (struct obj_food_t *)(p + 1);
+				obj->state = 2;
+			}
 			break;
 		case 0x07:
-		case 0x14:
-			WRITE_LE_UINT16(p + 8, 1);
+		case 0x14: {
+				struct obj_food_t *obj = (struct obj_food_t *)(p + 1);
+				obj->state = 1;
+			}
 			break;
 		case 0x08:
 			break;
 		case 0x09: {
-				struct obj_fish_t *obj = (struct obj_fish_t *)(p + 2);
+				struct obj_fish_t *obj = (struct obj_fish_t *)(p + 1);
 				obj->y_pos = 220;
 				obj->y_vel = 16 + (Random_GetNumber() % 5);
 				obj->state = 0;
@@ -254,77 +270,58 @@ void Objects_Reset(uint8_t *p) {
 		case 0x22:
 		case 0x26:
 		case 0x27: {
-				struct obj_monster_t *obj = (struct obj_monster_t *)(p + 2);
+				struct obj_monster_t *obj = (struct obj_monster_t *)(p + 1);
 				obj->state = obj->init_state;
 				obj->lifes = obj->unk2;
-				obj->x_pos = obj->unk4;
-				obj->y_pos = obj->unk6;
+				obj->x_pos = obj->init_x_pos;
+				obj->y_pos = obj->init_y_pos;
 				obj->state_counter = 0;
 				obj->ko_counter = 0;
 			}
 			break;
 		case 0x0e:
-		case 0x20:
-			WRITE_LE_UINT16(p + 8, 0);
-			WRITE_LE_UINT16(p + 2, 0);
-			break;
-		case 0x0f:
-			WRITE_LE_UINT16(p + 8, 0);
-			WRITE_LE_UINT16(p + 6, 0);
-			WRITE_LE_UINT16(p + 2, 0);
-			break;
-		case 0x10:
-			WRITE_LE_UINT16(p + 6, READ_LE_UINT16(p + 4));
-			WRITE_LE_UINT16(p + 12, 0);
-			break;
-		case 0x13:
-			WRITE_LE_UINT16(p + 4, 0);
-			break;
-		case 0x16:
-			WRITE_LE_UINT16(p + 4, Random_GetNumber() % 15);
-			break;
-		case 0x17:
-			WRITE_LE_UINT16(p + 6, 0);
-			WRITE_LE_UINT16(p + 8, READ_LE_UINT16(p + 2));
-			WRITE_LE_UINT16(p + 10, READ_LE_UINT16(p + 4));
-			break;
-		case 0x18:
-			WRITE_LE_UINT16(p + 8, 0);
-			WRITE_LE_UINT16(p + 6, 0);
-			break;
-		case 0x1d:
-			WRITE_LE_UINT16(p + 6, Random_GetNumber() % 10);
-			break;
-		case 0x1e:
-			WRITE_LE_UINT16(p + 2, 0);
-			break;
-		case 0x1f:
-			WRITE_LE_UINT16(p + 4, 220);
-			WRITE_LE_UINT16(p + 6, 16 + (Random_GetNumber() % 5));
-			WRITE_LE_UINT16(p + 8, 0);
-			WRITE_LE_UINT16(p + 2, Random_GetNumber() % 210);
-			break;
-		case 0x23: {
-				const int a = Random_GetNumber() % (READ_LE_UINT16(p + 2) - READ_LE_UINT16(p + 4));
-				WRITE_LE_UINT16(p + 6, READ_LE_UINT16(p + 4) + a);
-				const int b = Random_GetNumber() % (READ_LE_UINT16(p + 2) - READ_LE_UINT16(p + 4));
-				WRITE_LE_UINT16(p + 8, READ_LE_UINT16(p + 4) + b);
-				WRITE_LE_UINT16(p + 10, 56);
-				WRITE_LE_UINT16(p + 12, 77);
-				WRITE_LE_UINT16(p + 14, Random_GetNumber() % 2);
-				WRITE_LE_UINT16(p + 16, Random_GetNumber() % 2);
+		case 0x20: {
+				struct obj_monkey_t *obj = (struct obj_monkey_t *)(p + 1);
+				obj->throw_flag = 0;
+				obj->state = 0;
 			}
 			break;
-		case 0x24:
-			WRITE_LE_UINT16(p + 4, 220);
-			WRITE_LE_UINT16(p + 6, 16 + (Random_GetNumber() % 5));
-			WRITE_LE_UINT16(p + 8, 0);
+		case 0x0f: {
+				struct obj_bird_t *obj = (struct obj_bird_t *)(p + 1);
+				obj->frame = 0;
+				obj->unk4 = 0;
+				obj->state = 0;
+			}
+			break;
+		case 0x10: {
+				struct obj_platform_t *obj = (struct obj_platform_t *)(p + 1);
+				obj->current_y_pos = obj->y_pos;
+				obj->direction = 0;
+			}
+			break;
+		case 0x13: {
+				struct obj_fire_t *obj = (struct obj_fire_t *)(p + 1);
+				obj->state = 0;
+			}
+			break;
+			break;
+		case 0x16: {
+				struct obj_cave_spider_t *obj = (struct obj_cave_spider_t *)(p + 1);
+				obj->counter = Random_GetNumber() % 15;
+			}
+			break;
+		case 0x17: {
+				struct obj_cave_bat_t *obj = (struct obj_cave_bat_t *)(p + 1);
+				obj->state = 0;
+				obj->unk6 = obj->unk0;
+				obj->unk8 = obj->unk2;
+			}
 			break;
 		default:
 			fprintf(stderr, "Unhandled object 0x%x reset\n", num);
 			break;
 		}
-		p += object_size(num);
+		p += object_size(num) / sizeof(uint16_t);
 	}
 }
 
@@ -335,6 +332,7 @@ static void update_bonus(int num) {
 		break;
 	case 1: /* BONUS_BOMB */
 		g_game.bomb_flag = 1;
+		Game_SetPaletteBomb();
 		break;
 	case 2: /* BONUS_ALARM */
 		g_game.time += 30;
@@ -360,7 +358,7 @@ static void update_bonus(int num) {
 	}
 }
 
-static void update_monster(const uint8_t *monster, uint8_t *obj, int num) {
+static void update_monster(const uint8_t *monster, struct obj_monster_t *objm, int num) {
 	int16_t dat00 = READ_LE_UINT16(monster); monster += 2;
 	int16_t dat02 = READ_LE_UINT16(monster); monster += 2;
 	/*int16_t dat04 = READ_LE_UINT16(monster);*/ monster += 2;
@@ -377,7 +375,6 @@ static void update_monster(const uint8_t *monster, uint8_t *obj, int num) {
 	int16_t monster_away_spr_num = READ_LE_UINT16(monster); monster += 2;
 	int16_t monster_energy = READ_LE_UINT16(monster); monster += 2;
 	int16_t monster_direction_flag = READ_LE_UINT16(monster); monster += 2;
-	struct obj_monster_t *objm = (struct obj_monster_t *)obj;
 	if (g_game.bomb_flag != 0) {
 		objm->lifes = 0;
 		if (objm->state != MONSTER_STATE_DEAD) {
@@ -388,9 +385,9 @@ static void update_monster(const uint8_t *monster, uint8_t *obj, int num) {
 		}
 	}
 	if (objm->lifes != 0 || objm->state < MONSTER_STATE_DEAD) {
-		const int16_t w = objm->unk4;
+		const int16_t w = objm->init_x_pos;
 		if (g_game.player_x_pos + 20 > w && g_game.player_x_pos - var18 < w) {
-			const int16_t h = objm->unk6;
+			const int16_t h = objm->init_y_pos;
 			if (g_game.player_y_pos + 10 > h && g_game.player_y_pos - 15 < h) {
 				if (g_game.object_cave_entrance_mask == 0) {
 					g_game.object_cave_entrance_mask = 0;
@@ -402,8 +399,8 @@ static void update_monster(const uint8_t *monster, uint8_t *obj, int num) {
 
 		objm->state = objm->init_state;
 		--objm->lifes;
-		objm->x_pos = objm->unk4;
-		objm->y_pos = objm->unk6;
+		objm->x_pos = objm->init_x_pos;
+		objm->y_pos = objm->init_y_pos;
 
 		objm->direction = 0;
 		objm->state_counter = 0;
@@ -518,6 +515,7 @@ static void update_monster(const uint8_t *monster, uint8_t *obj, int num) {
 							objm->state = 4;
 							objm->state_counter = 0;
 							objm->direction = 1;
+							g_game.host.play_sound(SND_MASSUE2);
 						}
 					}
 				} else {
@@ -526,6 +524,7 @@ static void update_monster(const uint8_t *monster, uint8_t *obj, int num) {
 							objm->state = 4;
 							objm->state_counter = 0;
 							objm->direction = 0;
+							g_game.host.play_sound(SND_MASSUE2);
 						}
 					}
 				}
@@ -633,15 +632,15 @@ static void update_monster(const uint8_t *monster, uint8_t *obj, int num) {
 
 void Objects_Update() {
 	g_game.object_updated_flag = 1;
-	uint8_t *p = g_game.current_objects_dat;
+	uint16_t *p = g_game.current_objects_dat;
 	while (1) {
-		const uint16_t num = READ_LE_UINT16(p);
+		const uint16_t num = *p;
 		if (num == 0) {
 			break;
 		}
 		switch (num) {
 		case OBJ_STAIRS: {
-				struct obj_stairs_t *obj = (struct obj_stairs_t *)(p + 2);
+				struct obj_stairs_t *obj = (struct obj_stairs_t *)(p + 1);
 				if (g_game.player_x_pos - 8 >= obj->x || g_game.player_x_pos + 8 <= obj->x) {
 					break;
 				}
@@ -671,7 +670,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_PEAK: {
-				struct obj2_t *obj = (struct obj2_t *)(p + 2);
+				struct obj2_t *obj = (struct obj2_t *)(p + 1);
 				if (obj->x_pos - 21 >= g_game.player_x_pos || obj->x_pos + 5 <= g_game.player_x_pos) {
 					break;
 				}
@@ -682,7 +681,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_EGG: {
-				struct obj3_t *obj = (struct obj3_t *)(p + 2);
+				struct obj3_t *obj = (struct obj3_t *)(p + 1);
 				const int16_t counter = obj->counter;
 				if (counter == 0) {
 					break;
@@ -715,7 +714,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_ROCK: {
-				struct obj3_t *obj = (struct obj3_t *)(p + 2);
+				struct obj3_t *obj = (struct obj3_t *)(p + 1);
 				const int16_t counter = obj->counter;
 				if (counter == 0) {
 					break;
@@ -728,6 +727,7 @@ void Objects_Update() {
 						if (obj->counter != 0 && g_game.player_axe_flag != 0) {
 							--obj->counter;
 						}
+						g_game.host.play_sound(SND_MASSUE2);
 					}
 				}
 				if (obj->counter != 0) {
@@ -744,23 +744,24 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_BONUS: {
-				const uint16_t mask = READ_LE_UINT16(p + 10);
+				struct obj5_t *obj = (struct obj5_t *)(p + 1);
+				const uint16_t mask = obj->mask;
 				if (mask & 0x80) {
 					Game_AddObject(0, g_game.player_x_pos, g_game.bonus_current_y_pos, p1_bonus_spr_num_tbl[mask - 128], 0);
 					g_game.bonus_current_dy += 4;
 					g_game.bonus_current_y_pos += g_game.bonus_current_dy;
 					if (g_game.bonus_current_dy == 20) {
 						update_bonus(mask - 128);
-						WRITE_LE_UINT16(p + 10, 0);
+						obj->mask = 0;
 					}
 				}
-				const int16_t count = READ_LE_UINT16(p + 8);
+				const int16_t count = obj->counter;
 				if (count >= 70) {
 					break;
 				}
-				WRITE_LE_UINT16(p + 8, READ_LE_UINT16(p + 8) + 1);
-				const int16_t x = READ_LE_UINT16(p + 2);
-				const int16_t y = READ_LE_UINT16(p + 4);
+				++obj->counter;
+				const int16_t x = obj->x_pos;
+				const int16_t y = obj->y_pos;
 				if (count > 15  && count < 21) {
 					Game_AddObject(0, x + 4, y + 11, 86 + (count - 16) / 2, 0);
 				}
@@ -768,7 +769,7 @@ void Objects_Update() {
 					break;
 				}
 				if (count == 21) {
-					WRITE_LE_UINT16(p + 10, Random_GetNumber() % 6);
+					obj->mask = Random_GetNumber() % 6;
 				}
 				if (count < 65) {
 					int16_t si = x;
@@ -795,10 +796,11 @@ void Objects_Update() {
 						break;
 					}
 					if (g_game.player_club_flag == 1) {
-						WRITE_LE_UINT16(p + 10, 0x80);
+						obj->mask = 0x80;
 						g_game.bonus_current_dy = -20;
 						g_game.bonus_current_y_pos = y + 10;
-						WRITE_LE_UINT16(p + 8, 65);
+						obj->counter = 65;
+						g_game.host.play_sound(SND_MASSUE2);
 					}
 				} else {
 					Game_AddObject(0, x + 4, y + 11, 88 - (count - 65) / 2, 0);
@@ -806,7 +808,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_HIDDEN_FOOD: {
-				struct obj_food_t *obj = (struct obj_food_t *)(p + 2);
+				struct obj_food_t *obj = (struct obj_food_t *)(p + 1);
 				const uint16_t state = obj->state;
 				if (state == 0) {
 					break;
@@ -836,11 +838,12 @@ void Objects_Update() {
 					}
 					--obj->state;
 					Game_AddObject(0, obj->x_pos + 40, obj->y_pos - 6, obj->spr_num + 61, 0);
+					g_game.host.play_sound(SND_MASSUE2);
 				}
 			}
 			break;
 		case OBJ_SECRET_FOOD: {
-				struct obj_food_t *obj = (struct obj_food_t *)(p + 2);
+				struct obj_food_t *obj = (struct obj_food_t *)(p + 1);
 				if (obj->state != 1) {
 					break;
 				}
@@ -863,7 +866,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_BALLOONS: {
-				struct obj_balloons_t *obj = (struct obj_balloons_t *)(p + 2);
+				struct obj_balloons_t *obj = (struct obj_balloons_t *)(p + 1);
 				if (g_game.player_halo_flag == 0 && g_game.player_level5_flag == 0) {
 					Game_AddObject(0, obj->balloon1_x_pos, obj->balloon1_y_pos, obj->balloon1_spr_num, 0);
 					Game_AddObject(0, obj->balloon2_x_pos, obj->balloon2_y_pos, obj->balloon2_spr_num, 0);
@@ -871,7 +874,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_FISH: {
-				struct obj_fish_t *obj = (struct obj_fish_t *)(p + 2);
+				struct obj_fish_t *obj = (struct obj_fish_t *)(p + 1);
 				int16_t x = obj->x_pos;
 				int16_t y = obj->y_pos;
 				const int16_t state = obj->state;
@@ -903,23 +906,23 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_GUBBA_GLUB: {
-				update_monster(p1_object0x0a_data, p + 2, 0);
+				update_monster(p1_object0x0a_data, (struct obj_monster_t *)(p + 1), 0);
 			}
 			break;
 		case OBJ_BEAR: {
-				update_monster(p1_object0x0b_data, p + 2, 0);
+				update_monster(p1_object0x0b_data, (struct obj_monster_t *)(p + 1), 0);
 			}
 			break;
 		case OBJ_PYRO_TAX: {
-				update_monster(p1_object0x0c_data, p + 2, 0);
+				update_monster(p1_object0x0c_data, (struct obj_monster_t *)(p + 1), 0);
 			}
 			break;
 		case OBJ_TURTOSAURUS: {
-				update_monster(p1_object0x0d_data, p + 2, 0);
+				update_monster(p1_object0x0d_data, (struct obj_monster_t *)(p + 1), 0);
 			}
 			break;
 		case OBJ_CHIMP_AGOGO: {
-				struct obj_monkey_t *obj = (struct obj_monkey_t *)(p + 2);
+				struct obj_monkey_t *obj = (struct obj_monkey_t *)(p + 1);
 				int16_t x = obj->x_pos;
 				int16_t y = obj->y_pos;
 				if (obj->state < 4) {
@@ -966,26 +969,26 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_PTERIYAKI: {
-				if (READ_LE_UINT16(p + 2) == 0 && g_game.player_x_pos < 220) {
-					WRITE_LE_UINT16(p + 2, 1);
-					WRITE_LE_UINT16(p + 4, 355);
-					WRITE_LE_UINT16(p + 8, (READ_LE_UINT16(p + 8) + 1) & 3);
+				struct obj_bird_t *obj = (struct obj_bird_t *)(p + 1);
+				if (obj->state == 0 && g_game.player_x_pos < 220) {
+					obj->state = 1;
+					obj->unk2 = 355;
+					obj->frame = (obj->frame + 1) & 3;
 				}
-				uint16_t offset = READ_LE_UINT16(p + 8) + 5;
-				int16_t di = READ_LE_UINT16(p + offset * 2);
-				if (READ_LE_UINT16(p + 2) == 1 && k_monsters_enabled != 0) {
-					WRITE_LE_UINT16(p + 4, READ_LE_UINT16(p + 4) - 8);
+				int16_t di = obj->unk8[obj->frame];
+				if (obj->state == 1 && k_monsters_enabled != 0) {
+					obj->unk2 -= 8;
 				}
-				int16_t si = READ_LE_UINT16(p + 4);
-				int16_t spr_num = p1_bird_spr_num_tbl[READ_LE_UINT16(p + 6)] + 41;
+				int16_t si = obj->unk2;
+				int16_t spr_num = p1_bird_spr_num_tbl[obj->unk4] + 41;
 				Game_AddObject(0, si, di, spr_num, 0);
 				if (k_monsters_enabled != 0) {
-					WRITE_LE_UINT16(p + 6, READ_LE_UINT16(p + 6) + 1);
+					obj->unk4 += 1;
 				}
-				WRITE_LE_UINT16(p + 6, READ_LE_UINT16(p + 6) & 7);
-				int16_t x = READ_LE_UINT16(p + 4);
+				obj->unk4 = (obj->unk4 & 7);
+				int16_t x = obj->unk2;
 				if (x < -50) {
-					WRITE_LE_UINT16(p + 2, 0);
+					obj->state = 0;
 				} else {
 					if (si - 30 < g_game.player_x_pos && si + 10 > g_game.player_x_pos) {
 						if (di - 20 < g_game.player_y_pos && di + 18 > g_game.player_y_pos) {
@@ -996,28 +999,29 @@ void Objects_Update() {
 						if (g_game.player_x_pos + 52 > si && g_game.player_x_pos - 47 < si) {
 							if (g_game.player_y_pos + 29 > di && g_game.player_y_pos - 29 < di) {
 								if (g_game.player_facing_left_flag == 0) {
-									WRITE_LE_UINT16(p + 2, 2);
-									WRITE_LE_UINT16(p + 6, 0);
+									obj->state = 2;
+									obj->unk4 = 0;
+									g_game.host.play_sound(SND_MASSUE2);
 								}
 							}
 						}
 					}
 				}
-				if (READ_LE_UINT16(p + 2) != 2) {
+				if (obj->state != 2) {
 					break;
 				}
 				if (k_monsters_enabled != 0) {
-					WRITE_LE_UINT16(p + 4, READ_LE_UINT16(p + 4) + 30);
-					WRITE_LE_UINT16(p + 6, READ_LE_UINT16(p + 6) + 1);
+					obj->unk2 += 30;
+					++obj->unk4;
 				}
-				if (READ_LE_UINT16(p + 6) == 6) {
-					WRITE_LE_UINT16(p + 2, 1);
+				if (obj->unk4 == 6) {
+					obj->state = 1;
 				}
-				Game_AddObject(0, READ_LE_UINT16(p + 4), di, 44, 0);
+				Game_AddObject(0, obj->unk2, di, 44, 0);
 			}
 			break;
 		case OBJ_PLATFORM: {
-				struct obj_platform_t *obj = (struct obj_platform_t *)(p + 2);
+				struct obj_platform_t *obj = (struct obj_platform_t *)(p + 1);
 				bool flag = 0;
 				const int16_t x = obj->x_pos;
 				const int16_t y = obj->current_y_pos;
@@ -1043,7 +1047,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_CAVE_ENTRANCE: {
-				struct obj3_t *obj = (struct obj3_t *)(p + 2);
+				struct obj3_t *obj = (struct obj3_t *)(p + 1);
 				if (obj->x_pos - 8 >= g_game.player_x_pos || obj->x_pos + 8 <= g_game.player_x_pos) {
 					break;
 				}
@@ -1061,7 +1065,7 @@ void Objects_Update() {
 			}
 			break;
 		case OBJ_FIRE: {
-				struct obj_fire_t *obj = (struct obj_fire_t *)(p + 2);
+				struct obj_fire_t *obj = (struct obj_fire_t *)(p + 1);
 				if (k_monsters_enabled != 0) {
 					obj->state ^= 1;
 				}
@@ -1078,7 +1082,7 @@ void Objects_Update() {
 			}
 			break;
 		case 0x14: {
-				struct obj_food_t *obj = (struct obj_food_t *)(p + 2);
+				struct obj_food_t *obj = (struct obj_food_t *)(p + 1);
 				if (obj->state != 1) {
 					break;
 				}
@@ -1104,43 +1108,42 @@ void Objects_Update() {
 					break;
 				}
 				g_game.next_screen_flag = 1;
-				g_game.current_screen = READ_LE_UINT16(p + 2);
-				g_game.player_exit_from_cave_screen_x_pos = READ_LE_UINT16(p + 4);
-				g_game.player_exit_from_cave_screen_y_pos = READ_LE_UINT16(p + 6);
+				g_game.current_screen = p[1];
+				g_game.player_exit_from_cave_screen_x_pos = p[2];
+				g_game.player_exit_from_cave_screen_y_pos = p[3];
 				g_game.player_halo_duration = 39;
 			}
 			break;
 		case OBJ_CAVE_SPIDER: {
-				struct obj_cave_spider_t *obj = (struct obj_cave_spider_t *)(p + 2);
+				struct obj_cave_spider_t *obj = (struct obj_cave_spider_t *)(p + 1);
 				if (obj->counter == 17) {
 					obj->counter = 0;
 				} else if (k_monsters_enabled != 0) {
 					++obj->counter;
 				}
 				int16_t di = 0;
-				const int16_t si = obj->unk0;
 				if (obj->counter < 2 || obj->counter > 7) {
-					Game_AddObject(0, si, obj->unk4, 119, 0);
+					Game_AddObject(0, obj->x_pos, obj->y_pos, 119, 0);
 					di = (g_game.player_y_vel & 0x7F) <= 20 ? 0 : 30;
 				}
 				if (obj->counter == 2 || obj->counter == 6 || obj->counter == 7) {
-					Game_AddObject(0, si, obj->unk4 + 10, 120, 0);
+					Game_AddObject(0, obj->x_pos, obj->y_pos + 10, 120, 0);
 				}
 				if (obj->counter > 2 && obj->counter < 6) {
-					Game_AddObject(0, si, obj->unk4 + 16, 121, 0);
+					Game_AddObject(0, obj->x_pos, obj->y_pos + 16, 121, 0);
 				}
-				if (si - 23 >= g_game.player_x_pos || si + 16 <= g_game.player_x_pos) {
+				if (obj->x_pos - 23 >= g_game.player_x_pos || obj->x_pos + 16 <= g_game.player_x_pos) {
 					break;
 				}
-				if (obj->unk4 + 25 >= g_game.player_y_pos || obj->unk4 + di + 16 <= g_game.player_y_pos) {
+				if (obj->y_pos + 25 >= g_game.player_y_pos || obj->y_pos + di + 16 <= g_game.player_y_pos) {
 					break;
 				}
 				Game_HitPlayer(1);
 			}
 			break;
 		case OBJ_CAVE_BAT: {
-				struct obj_cave_bat_t *obj = (struct obj_cave_bat_t *)(p + 2);
-				if (obj->unk4 & 2) {
+				struct obj_cave_bat_t *obj = (struct obj_cave_bat_t *)(p + 1);
+				if (obj->state & 2) {
 					break;
 				}
 				if (k_monsters_enabled != 0) {
@@ -1159,9 +1162,9 @@ void Objects_Update() {
 				const int16_t si = obj->unk6;
 				const int16_t di = obj->unk8;
 				if (k_monsters_enabled != 0) {
-					obj->unk4 ^= 1;
+					obj->state ^= 1;
 				}
-				Game_AddObject(0, si, di, 122 + (obj->unk4 & 1), 0);
+				Game_AddObject(0, si, di, 122 + (obj->state & 1), 0);
 				if (g_game.player_x_pos < si && si - 30 < g_game.player_x_pos && g_game.player_y_pos - 4 < di) {
 					Game_HitPlayer(1);
 				}
@@ -1172,11 +1175,11 @@ void Objects_Update() {
 					break;
 				}
 				if (g_game.player_facing_left_flag == 0 && g_game.player_x_pos < si && si - 35 < g_game.player_x_pos) {
-					obj->unk4 |= 2;
+					obj->state |= 2;
 					Game_AddScore(si, di, 10);
 				}
 				if (g_game.player_facing_left_flag != 0 && si + 50 < g_game.player_x_pos && g_game.player_x_pos > si) {
-					obj->unk4 |= 2;
+					obj->state |= 2;
 					Game_AddScore(si, di, 10);
 				}
 			}
@@ -1185,32 +1188,32 @@ void Objects_Update() {
 			fprintf(stderr, "Unhandled object 0x%x update\n", num);
 			break;
 		}
-		p += object_size(num);
+		p += object_size(num) / 2;
 	}
 }
 
-uint8_t *Objects_ChangeScreen(uint8_t *p, int screen_num) {
+uint16_t *Objects_ChangeScreen(uint16_t *p, int screen_num) {
 	while (screen_num != 0) {
-		const uint16_t num = READ_LE_UINT16(p);
+		const uint16_t num = *p;
 		if (num == 0) {
 			--screen_num;
 		}
-		p += object_size(num);
+		p += object_size(num) / sizeof(uint16_t);
 	}
 	g_game.current_objects_dat = p;
 	return p;
 }
 
 void Objects_DrawBackground() {
-	uint8_t *p = g_game.current_objects_dat;
+	uint16_t *p = g_game.current_objects_dat;
 	while (1) {
-		const uint16_t num = READ_LE_UINT16(p);
+		const uint16_t num = *p;
 		if (num == 0) {
 			break;
 		}
 		switch (num) {
 		case OBJ_PEAK: {
-				struct obj2_t *obj = (struct obj2_t *)(p + 2);
+				struct obj2_t *obj = (struct obj2_t *)(p + 1);
 				Game_DrawBackgroundObject(obj->x_pos, obj->y_pos, 129);
 			}
 			break;
@@ -1219,6 +1222,6 @@ void Objects_DrawBackground() {
 			}
 			break;
 		}
-		p += object_size(num);
+		p += object_size(num) / sizeof(uint16_t);
 	}
 }

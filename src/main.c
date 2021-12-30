@@ -14,7 +14,7 @@ static const int SCALE = 2;
 
 static const int TICK_MS = 50;
 
-#define MAX_SPRITESHEETS 4
+#define MAX_SPRITESHEETS MAT_COUNT
 
 struct spritesheet_t {
 	int count;
@@ -83,11 +83,15 @@ static void setup_keymap() {
 	_gamepad_tbl[SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = GAME_KEYCODE_RIGHT;
 	_scancode_tbl[SDL_SCANCODE_SPACE]  = GAME_KEYCODE_ACTION;
 	_scancode_tbl[SDL_SCANCODE_RETURN] = GAME_KEYCODE_ACTION;
+	_scancode_tbl[SDL_SCANCODE_LSHIFT] = GAME_KEYCODE_JUMP;
+	_scancode_tbl[SDL_SCANCODE_RSHIFT] = GAME_KEYCODE_JUMP;
+	_scancode_tbl[SDL_SCANCODE_J]      = GAME_KEYCODE_JUMP;
 	_scancode_tbl[SDL_SCANCODE_ESCAPE] = GAME_KEYCODE_PAUSE;
 	_scancode_tbl[SDL_SCANCODE_P]      = GAME_KEYCODE_PAUSE;
 	_joystick_tbl[0] = GAME_KEYCODE_ACTION;
+	_joystick_tbl[1] = GAME_KEYCODE_JUMP;
 	_gamepad_tbl[SDL_CONTROLLER_BUTTON_A] = GAME_KEYCODE_ACTION;
-	_gamepad_tbl[SDL_CONTROLLER_BUTTON_B] = GAME_KEYCODE_ACTION;
+	_gamepad_tbl[SDL_CONTROLLER_BUTTON_B] = GAME_KEYCODE_JUMP;
 	_gamepad_tbl[SDL_CONTROLLER_BUTTON_BACK]  = GAME_KEYCODE_PAUSE;
 	_gamepad_tbl[SDL_CONTROLLER_BUTTON_START] = GAME_KEYCODE_PAUSE;
 	_gamepad_tbl[SDL_CONTROLLER_BUTTON_DPAD_UP]    = GAME_KEYCODE_UP;
@@ -245,7 +249,6 @@ static int load_file(const char *name, uint8_t *dst) {
 		SDL_Surface *surface = SDL_LoadBMP(path);
 		fprintf(stdout, "Loaded background surface '%s' %p\n", path, surface);
 		_background = SDL_CreateTextureFromSurface(_renderer, surface);
-		fprintf(stdout, "Created background texture %p\n", _background);
 	} else if (strcasecmp(ext + 1, "mat") == 0) {
 		char path_bmp[MAXPATHLEN];
 		snprintf(path_bmp, sizeof(path_bmp), "sheet-%s", name);
@@ -274,6 +277,21 @@ static void clear_spritesheets() {
 	_spritesheets_count = MAT_LSPR;
 }
 
+
+static void load_sounds() {
+}
+
+static void free_sounds() {
+	for (int i = 0; i < SND_COUNT; ++i) {
+	}
+}
+
+static void play_sound(int num) {
+}
+
+static void play_music(int num) {
+}
+
 static struct host_intf_t _host = {
 	.load_file = load_file,
 	.clear_spritesheets = clear_spritesheets,
@@ -283,6 +301,8 @@ static struct host_intf_t _host = {
 	.set_clipping_rect = render_set_clipping_rect,
 	.fill_background_rect = render_fill_background_rect,
 	.add_rect = render_add_rect,
+	.play_sound = play_sound,
+	.play_music = play_music,
 };
 
 static void handle_event(SDL_Event *ev, bool *quit, bool *paused) {
@@ -380,12 +400,12 @@ static void mainLoop() {
 }
 
 int main(int argc, char *argv[]) {
-	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
+	SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_AUDIO);
 	SDL_ShowCursor(SDL_DISABLE);
 
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0"); /* nearest pixel sampling */
 
-	int flags = SDL_WINDOW_RESIZABLE;
+	const int flags = SDL_WINDOW_RESIZABLE;
 	const int w = GAME_W * SCALE;
 	const int h = GAME_H * SCALE;
 	SDL_Window *window = SDL_CreateWindow(WINDOW_CAPTION, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, flags);
@@ -423,6 +443,8 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	load_sounds();
+
 	Game_Init(&_host);
 #ifdef __EMSCRIPTEN__
 	emscripten_set_main_loop(mainLoop, 1000 / TICK_MS, 1);
@@ -449,6 +471,9 @@ int main(int argc, char *argv[]) {
 	}
 #endif
 	Game_Fini();
+
+	free_sounds();
+
 	SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(window);
 	if (_controller) {

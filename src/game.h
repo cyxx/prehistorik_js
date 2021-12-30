@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -15,16 +16,13 @@ static inline uint16_t READ_LE_UINT16(const uint8_t *p) {
 	return p[0] | (p[1] << 8);
 }
 
-static inline void WRITE_LE_UINT16(uint8_t *p, uint16_t value) {
-	p[0] = value & 255;
-	p[1] = value >> 8;
-}
-
 enum {
 	MAT_CHAR,
 	MAT_LSPR,
 	MAT_ELEM,
 	MAT_GROT,
+
+	MAT_COUNT
 };
 
 enum {
@@ -41,6 +39,8 @@ struct host_intf_t {
 	void (*set_clipping_rect)(int dst_mask, int x, int y, int w, int h);
 	void (*fill_background_rect)(int x, int y, int w, int h, uint32_t color);
 	void (*add_rect)(int x, int y, int w, int h, uint32_t color);
+	void (*play_sound)(int num);
+	void (*play_music)(int num);
 };
 
 enum {
@@ -49,7 +49,8 @@ enum {
 	GAME_KEYCODE_DOWN   = 1 << 2,
 	GAME_KEYCODE_UP     = 1 << 3,
 	GAME_KEYCODE_ACTION = 1 << 4,
-	GAME_KEYCODE_PAUSE  = 1 << 5,
+	GAME_KEYCODE_JUMP   = 1 << 5,
+	GAME_KEYCODE_PAUSE  = 1 << 6,
 };
 
 int Game_Init(struct host_intf_t *host_intf);
@@ -64,6 +65,8 @@ enum {
 	SND_MASSUE2,
 	SND_RESSORT,
 	SND_BONUS,
+
+	SND_COUNT,
 };
 
 enum {
@@ -105,7 +108,7 @@ struct game_t {
 	uint32_t rand;
 
 	uint32_t score;
-	uint32_t extra_life_score;
+	uint32_t current_score;
 
 	int16_t level_num;
 
@@ -129,7 +132,7 @@ struct game_t {
 	int16_t player_dead_x_pos, player_dead_y_pos;
 	int16_t player_dead_counter;
 	int16_t player_action_key_flag;
-	int16_t word_3717C;
+	bool player_action_state_flag;
 	bool player_halo_flag;
 	bool player_facing_left_flag;
 	bool player_axe_flag;
@@ -147,7 +150,7 @@ struct game_t {
 
 	bool next_screen_flag; /* 1 if screen should change (left, right, cave, secret) */
 	int16_t current_screen;
-	uint8_t *current_objects_dat;
+	uint16_t *current_objects_dat;
 	int16_t screen_height;
 
 	int16_t bonus_current_dy;
@@ -199,8 +202,11 @@ void player_update_action();
 void player_update_club();
 void player_update_halo();
 void player_update_flying_position();
-void add_player_object();
+void Game_AddPlayerObject();
 void Game_UpdateFireball();
+void Game_SetPaletteCaveLevel1();
+void Game_SetPaletteScreenArea();
+void Game_SetPaletteBomb();
 
 /* cave.c */
 int Cave_Init(int level, int num);
@@ -211,9 +217,9 @@ int Level1_Init();
 int Level1_DoFrame();
 
 /* objects.c */
-void Objects_Reset(uint8_t *p);
+void Objects_Reset(uint16_t *p);
 void Objects_Update();
-uint8_t *Objects_ChangeScreen(uint8_t *p, int screen_num);
+uint16_t *Objects_ChangeScreen(uint16_t *p, int screen_num);
 void Objects_DrawBackground();
 
 /* random.c */
@@ -222,9 +228,9 @@ uint16_t Random_GetNumber();
 
 /* staticres.c */
 extern const uint32_t p1_level1_palette_colors[];
-extern uint8_t p1_level1_screen_tbl[];
-extern uint8_t p1_level1_secret_tbl[];
-extern uint8_t p1_level1_cave_tbl[];
+extern uint16_t p1_level1_screen_tbl[];
+extern uint16_t p1_level1_secret_tbl[];
+extern uint16_t p1_level1_cave_tbl[];
 extern const uint16_t p1_level1_elem_size_tbl[];
 extern const uint16_t p1_level1_elem_data_tbl[];
 extern const uint16_t p1_level1_screen_height_tbl[];
@@ -244,5 +250,7 @@ extern const uint16_t p1_player_death_spr_num_tbl[];
 extern const uint16_t p1_bonus_spr_num_tbl[];
 extern const uint16_t p1_secret_score_tbl[];
 extern const uint16_t p1_bird_spr_num_tbl[];
+extern const uint8_t p1_secret_palette_data[];
+extern const uint8_t p1_level1_cave_palette_data[];
 
 #endif /* GAME_H__ */

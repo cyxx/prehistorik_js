@@ -1,9 +1,8 @@
 
 #include "game.h"
 
-
 static bool _cave_flag;
-
+static uint8_t _changing_screen_flag = 0; /* 1: right, 2: left */
 static int16_t _display_get_ready_counter;
 
 static void level1_reset() {
@@ -25,7 +24,7 @@ static void level1_reset() {
 	g_game.player_club_flag = 0;
 	g_game.player_dead_counter = 0;
 	g_game.game_over_flag = 0;
-	g_game.score = 0;
+	g_game.score = 1;
 	g_game.time = 99;
 	g_game.timer_counter = 0;
 	g_game.food = 0;
@@ -47,8 +46,6 @@ static void reset_objects() {
 	g_game.objects_count = 0;
 }
 
-static uint8_t changing_screen_flag = 0; /* 1: right, 2: left */
-
 int Level1_Init() {
 	g_game.level_num = 1;
 	g_game.host.load_file("fond1.pc1", 0);
@@ -61,6 +58,7 @@ int Level1_Init() {
 	Objects_Reset(p1_level1_screen_tbl);
 	Objects_Reset(p1_level1_secret_tbl);
 	Objects_Reset(p1_level1_cave_tbl);
+	g_game.host.play_music(2);
 	return 1;
 }
 
@@ -71,7 +69,7 @@ int Level1_DoFrame() {
 		}
 		_cave_flag = 0;
 	}
-	if (g_game.next_screen_flag) { /* while (g_game.player_lifes >= 0 && g_game.current_screen != 19) { */
+	if (g_game.next_screen_flag) {
 		Game_SetScreenHeight(199);
 		if (g_game.current_screen < 100) {
 			if (g_game.current_screen != 11) {
@@ -145,12 +143,12 @@ int Level1_DoFrame() {
 	if (g_game.current_screen == 10 || (g_game.current_screen == 11 && g_game.player_halo_flag != 0)) { /* screen flying over water with ballons */
 		player_update_flying_position();
 	}
-	if (changing_screen_flag == 0) {
-		add_player_object();
+	if (_changing_screen_flag == 0) {
+		Game_AddPlayerObject();
 	}
 	if (g_game.next_screen_flag == 0) {
 		player_update_club();
-		if (g_game.player_lifes >= 0 && g_game.game_over_flag == 0 && changing_screen_flag == 0) {
+		if (g_game.player_lifes >= 0 && g_game.game_over_flag == 0 && _changing_screen_flag == 0) {
 			player_update_halo();
 		}
 		if (g_game.current_screen == 18 && g_game.food < 45 && !k_no_food) {
@@ -159,7 +157,7 @@ int Level1_DoFrame() {
 		}
 	}
 	Game_DrawObjects();
-	changing_screen_flag = 0;
+	_changing_screen_flag = 0;
 	if (g_game.game_over_flag != 0) {
 		return 1;
 	}
@@ -192,7 +190,7 @@ int Level1_DoFrame() {
 			--g_game.current_screen;
 			g_game.player_x_pos = 285;
 			g_game.next_screen_flag = 1;
-			changing_screen_flag = 2;
+			_changing_screen_flag = 2;
 		}
 		if (g_game.current_screen == 9 && g_game.player_x_pos > 260 && g_game.player_halo_flag == 0) {
 			g_game.player_x_pos += 2;
@@ -202,13 +200,13 @@ int Level1_DoFrame() {
 			++g_game.current_screen;
 			g_game.player_x_pos = 6;
 			g_game.next_screen_flag = 1;
-			changing_screen_flag = 1;
+			_changing_screen_flag = 1;
 		}
 		if (g_game.player_x_pos > 295 && g_game.current_screen != 9 && g_game.current_screen != 18) {
 			++g_game.current_screen;
 			g_game.player_x_pos = 6;
 			g_game.next_screen_flag = 1;
-			changing_screen_flag = 1;
+			_changing_screen_flag = 1;
 		}
 		if (g_game.player_x_pos > 260 && g_game.current_screen == 18 && (k_no_food || g_game.food > 44)) {
 			++g_game.current_screen;

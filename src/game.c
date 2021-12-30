@@ -4,7 +4,7 @@
 struct game_t g_game;
 
 static void restart_level() {
-	g_game.extra_life_score = 0;
+	g_game.current_score = 0;
 	g_game.player_lifes = 3;
 	g_game.host.clear_spritesheets();
 	Level1_Init();
@@ -58,7 +58,7 @@ void Game_GetObjectDim(int spr_num, int *w, int *h) {
 }
 
 void Game_AddScore(int x_pos, int y_pos, int score) {
-	g_game.extra_life_score += score;
+	g_game.current_score += score;
 	int num = 0;
 	for (int i = 0; i < 5; ++i) {
 		if (p1_score_tbl[i] == score) {
@@ -69,6 +69,7 @@ void Game_AddScore(int x_pos, int y_pos, int score) {
 	if (num == 0) {
 		return;
 	}
+	g_game.host.play_sound(SND_BONUS);
 	for (int i = 0; i < MAX_SCORE_BONUSES; ++i) {
 		struct score_bonus_t *bonus = &g_game.score_bonuses_tbl[i];
 		if (bonus->counter == 0) {
@@ -120,14 +121,15 @@ void Game_DrawBackgroundObject(int x, int y, int num) {
 }
 
 void Game_DrawPanelScore() {
-	if (g_game.extra_life_score > 999999) {
+	if (g_game.current_score > 999999) {
+		g_game.current_score -= 1000000;
 	}
 	const uint8_t color_fg = 15;
 	const uint8_t color_bg = (g_game.level_num == 1) ? 4 : 0;
 	char buf[16];
-	snprintf(buf, sizeof(buf), "%05d", g_game.extra_life_score);
+	snprintf(buf, sizeof(buf), "%05d", g_game.current_score);
 	Game_DrawString(48, 8, buf, color_fg, color_bg, 0);
-	if (g_game.score * 10000 <= g_game.extra_life_score) {
+	if (g_game.score * 10000 <= g_game.current_score) {
 		++g_game.score;
 		++g_game.player_lifes;
 		if (g_game.player_lifes > 99) {
@@ -267,6 +269,7 @@ void Game_DrawLevelScreen(const uint16_t *size, const uint16_t *tiles, int scree
 }
 
 void Game_DrawSecretScreen(int num) {
+		Game_SetPaletteScreenArea();
 	memset(g_game.tiles_mask_buffer, 0, sizeof(g_game.tiles_mask_buffer));
 	g_game.host.clear_sprites(SPR_DST_BACKGROUND);
 	for (int x = 0; x < 10000; x += 48) {
@@ -310,14 +313,14 @@ void Game_HitPlayer(int energy) {
 void player_update_action() {
 	g_game.player_action_key_flag = (g_game.keymask & GAME_KEYCODE_ACTION) != 0;
 	if (g_game.player_action_key_flag != 0) {
-		if (g_game.word_3717C != 0) {
+		if (g_game.player_action_state_flag != 0) {
 			g_game.player_action_key_flag = 0;
 		} else if (g_game.player_club_flag == 0 && g_game.game_over_flag == 0 && g_game.player_climbing_flag == 0 && g_game.player_halo_flag == 0 && g_game.player_level5_flag == 0) {
-			g_game.word_3717C = 1;
+			g_game.player_action_state_flag = 1;
 			g_game.player_club_flag = 2;
 		}
 	} else {
-		g_game.word_3717C = 0;
+		g_game.player_action_state_flag = 0;
 	}
 }
 
@@ -367,13 +370,13 @@ void player_update_flying_position() {
 		return;
 	}
 	g_game.player_y_pos += 2;
-	if ((g_game.keymask & GAME_KEYCODE_LEFT) != 0 /*_player_input_left != 0 */ && g_game.player_x_pos > 4) {
+	if ((g_game.keymask & GAME_KEYCODE_LEFT) != 0 && g_game.player_x_pos > 4) {
 		g_game.player_x_pos -= 5;
 	}
 	if (g_game.keymask & GAME_KEYCODE_RIGHT) {
 		g_game.player_x_pos += 5;
 	}
-	if ((g_game.keymask & GAME_KEYCODE_UP) != 0 /*_player_input_up != 0*/ && g_game.player_y_pos > 30) {
+	if ((g_game.keymask & GAME_KEYCODE_UP) != 0 && g_game.player_y_pos > 30) {
 		g_game.player_y_pos -= 8;
 	}
 	if (g_game.keymask & GAME_KEYCODE_DOWN) {
@@ -454,7 +457,7 @@ static void add_player_death_animation() {
 	}
 }
 
-void add_player_object() {
+void Game_AddPlayerObject() {
 	int16_t di = 0;
 	if (g_game.player_lifes < 0) {
 		return;
@@ -525,7 +528,7 @@ void add_player_object() {
 		g_game.player_restart_y_pos = g_game.player_y_pos;
 		g_game.player_restart_screen = g_game.current_screen;
 	}
-	if ((g_game.keymask & GAME_KEYCODE_LEFT) != 0 /*_player_input_left != 0*/ && g_game.player_club_flag == 0) {
+	if ((g_game.keymask & GAME_KEYCODE_LEFT) != 0 && g_game.player_club_flag == 0) {
 		si = 5;
 		if (di == 0 && g_game.player_gravity_flag == 0) {
 			++g_game.player_moving_frame_num;
@@ -547,7 +550,7 @@ void add_player_object() {
 			g_game.player_x_pos -= 2;
 		}
 	}
-	if ((g_game.keymask & GAME_KEYCODE_RIGHT) != 0 /*_player_input_right != 0*/ && g_game.player_club_flag == 0) {
+	if ((g_game.keymask & GAME_KEYCODE_RIGHT) != 0 && g_game.player_club_flag == 0) {
 		si = 5;
 		if (di == 0 && g_game.player_gravity_flag == 0) {
 			++g_game.player_moving_frame_num;
@@ -575,6 +578,7 @@ void add_player_object() {
 			++g_game.player_gravity_flag;
 			++si;
 			if (g_game.player_gravity_flag == 2 && (g_game.player_y_vel & 0x7F) > 20) {
+				g_game.host.play_sound(SND_RESSORT);
 			}
 			if ((g_game.player_y_vel & 0x7F) - 8 < g_game.player_gravity_flag && (g_game.player_y_vel & 0x7F) > g_game.player_gravity_flag) {
 				--g_game.player_y_pos;
@@ -592,7 +596,7 @@ void add_player_object() {
 		} while (g_game.player_gravity_flag != 0 && si < 4);
 		spr_num = 4;
 	}
-	if (di == 0 && g_game.player_gravity_flag == 0 && (g_game.keymask & GAME_KEYCODE_UP) != 0) {
+	if (di == 0 && g_game.player_gravity_flag == 0 && (g_game.keymask & GAME_KEYCODE_JUMP) != 0) {
 		g_game.player_gravity_flag = 1;
 	}
 	if (g_game.player_club_flag != 0) {
@@ -642,4 +646,35 @@ void Game_UpdateFireball() {
 		return;
 	}
 	Game_HitPlayer(1);
+}
+
+static void color_difference(int num, const uint32_t src, const uint8_t *dst) {
+	const uint8_t src_r = src >> 16;
+	const uint8_t src_g = src >> 8;
+	const uint8_t src_b = src;
+	const int diff_r = abs(src_r - dst[0] * 8);
+	const int diff_g = abs(src_g - dst[1] * 8);
+	const int diff_b = abs(src_b - dst[2] * 8);
+	fprintf(stdout, "palette %2d: diff r:%d g:%d b:%d\n", num, diff_r, diff_g, diff_b);
+}
+
+void Game_SetPaletteCaveLevel1() {
+	if (0) {
+		const uint8_t *p = p1_level1_cave_palette_data;
+		for (int i = 0; i < 16; ++i, p += 3) {
+			color_difference(i, p1_level1_palette_colors[i], p);
+		}
+	}
+}
+
+void Game_SetPaletteScreenArea() {
+	if (0) {
+		const uint8_t *p = p1_secret_palette_data;
+		for (int i = 0; i < 16; ++i, p += 3) {
+			color_difference(i, p1_level1_palette_colors[i], p);
+		}
+	}
+}
+
+void Game_SetPaletteBomb() {
 }

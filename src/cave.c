@@ -1,7 +1,6 @@
 
 #include "game.h"
 
-
 int Cave_Init(int level, int num) {
 	g_game.player_exit_from_cave_screen_x_pos = g_game.player_x_pos;
 	g_game.player_exit_from_cave_screen_y_pos = g_game.player_y_pos;
@@ -19,17 +18,17 @@ int Cave_Init(int level, int num) {
 	g_game.game_over_flag = 0;
 	g_game.player_gravity_flag = 0;
 	g_game.next_screen_flag = 0;
+	if (level == 1) {
+		Game_SetPaletteCaveLevel1();
+	}
 	Game_SetScreenHeight(199);
 	if (level == 1) {
 		Game_DrawCaveScreenLevel1(num);
 		g_game.cave_exit_x_pos = p1_level1_cave_size_tbl[num] - 8;
 		g_game.cave_exit_y_pos = 40;
-	}
-	if (level == 3) {
-	}
-	if (level == 5) {
-	}
-	if (level == 7) {
+	} else if (level == 3) {
+	} else if (level == 5) {
+	} else if (level == 7) {
 	}
 	Objects_ChangeScreen(p1_level1_cave_tbl, num);
 	Objects_DrawBackground();
@@ -55,7 +54,7 @@ int Cave_DoFrame(int level) {
 	Objects_Update();
 	Game_UpdateFireball();
 	player_update_action();
-	add_player_object();
+	Game_AddPlayerObject();
 	if (g_game.next_screen_flag == 0) {
 		player_update_club();
 		if (g_game.player_lifes >= 0 && g_game.game_over_flag == 0) {
