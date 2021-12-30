@@ -2,22 +2,27 @@
 	<head>
 		<title>Prehistorik_js</title>
 		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<meta name="viewport" content="width=640">
+		<meta name="viewport" content="width=640px; user-scalable=no;">
 	</head>
 
-	<body style="margin: 0px auto; text-align: center; padding: 16px 16px; width: 640px; background: #e5e5e5;">
-		<div align="center" style="background-color: #fff; padding-top: 5px; padding-bottom: 5px; width: 640px; text-align: center;">
+	<body style="margin: 0px auto; text-align: center; width: 640px; background: #e5e5e5;">
+		<div align="center" style="padding-top: 5px; padding-bottom: 5px; width: 640px;;">
 			<div align="center">
 				<canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()"></canvas>
 			</div>
 		</div>
-                <div style="background-color: #eeeeee; padding-top: 128px; padding-left:128px; height:128px;">
-			<div class="joystick" style="width: 50%; float: left;"></div>
-			<div class="buttons" style="width: 50%; float: right;">
-				<div class="button_jump" style="width: 50%; float: left;"></div>
-				<div class="button_action" style="width: 50%; float: right;"></div>
+		<div style="padding-top: 0px; padding-left: 128px; padding-right: 64px; width: 448px; height: 128px;">
+			<div id="joystick" style="padding-top: 128px; width: 50%; height: 100%; float: left;"></div>
+			<div class="buttons" style="width: 50%; height: 100%; float: right;">
+				<div id="button_jump" style="margin-top: 128px; float: left; background-color: #bbb; border-radius: 50%; width: 96px; height: 96px;"></div>
+				<div id="button_action" style="margin-top: 32px; float: right; background-color: #bbb; border-radius: 50%; width: 96px; height: 96px;"></div>
 			</div>
 		</div>
+<!--
+		<div style="float: left; background-color: #aaa; margin: 8px; width: 100%;">
+			<strong>prehistorik.js</strong> code is available on <a href="https://github.com/cyxx/prehistorik_js">github.com</a>.
+		</div>
+-->
 		<script type='text/javascript'>
 			var Module = {
 				canvas: (function() { return document.getElementById('canvas'); })()
@@ -43,7 +48,7 @@
 				Module.canvas.dispatchEvent( ev );
 			}
 			var joystick = nipplejs.create({
-				zone: document.getElementsByClassName('joystick')[0],
+				zone: document.getElementById('joystick'),
 				mode: 'static',
 				dynamicPage: true,
 				size: 192,
@@ -92,38 +97,36 @@
 			joystick.on( 'end', function( evt, data ) {
 				releaseDirectionKeys( );
 			} );
-			var button_jump = nipplejs.create({
-				zone: document.getElementsByClassName('button_jump')[0],
-				mode: 'static',
-				dynamicPage: true,
-				size: 128,
-				lockX: true,
-				lockY: true,
-				threshold: 0,
-				color: '#555'
-			} );
-			button_jump.on( 'start', function( evt, data ) {
+			var button_jump = document.getElementById('button_jump');
+			button_jump.onmousedown = function( ) {
 				emitKeyEvent( 'j', 'keydown' );
-			} );
-			button_jump.on( 'end', function( evt, data ) {
+			}
+			button_jump.onmouseup = function( ) {
 				emitKeyEvent( 'j', 'keyup' );
-			} );
-			var button_action = nipplejs.create({
-				zone: document.getElementsByClassName('button_action')[0],
-				mode: 'static',
-				dynamicPage: true,
-				size: 128,
-				lockX: true,
-				lockY: true,
-				threshold: 0,
-				color: '#555'
-			} );
-			button_action.on( 'start', function( evt, data ) {
+			}
+			button_jump.ontouchstart = function( evt ) {
+				evt.preventDefault( );
+				emitKeyEvent( 'j', 'keydown' );
+			}
+			button_jump.ontouchend = function( evt ) {
+				evt.preventDefault( );
+				emitKeyEvent( 'j', 'keyup' );
+			}
+			var button_action = document.getElementById('button_action');
+			button_action.onmousedown = function( ) {
 				emitKeyEvent( 'Enter', 'keydown' );
-			} );
-			button_action.on( 'end', function( evt, data ) {
+			}
+			button_action.onmouseup = function( ) {
 				emitKeyEvent( 'Enter', 'keyup' );
-			} );
+			}
+			button_action.ontouchstart = function( evt ) {
+				evt.preventDefault( );
+				emitKeyEvent( 'Enter', 'keydown' );
+			}
+			button_action.ontouchend = function( evt ) {
+				evt.preventDefault( );
+				emitKeyEvent( 'Enter', 'keyup' );
+			}
 		</script>
 	</body>
 </html>
